@@ -25,13 +25,15 @@ static const double ROBOT_LENGTH = 0.2;
 static const double SIM_TIME_STEP = 0.05;
 // The tolerance we want to come within for each waypoint
 static const double WAYPOINT_TOLERANCE = 0.2;
+// The physical limit for the robot turning angle
+static const double MAX_TURN_ANGLE = M_PI/3;
 
 /** You CAN change these constants **/
 // The name of the file to read the waypoints in from
 static const char* WAYPOINTS_FILE_NAME = "waypoints.txt";
 // The maximum number of iterations the simulator will run (presuming 
 // "waypoints" is never empty)
-static const double MAX_SIM_ITERS = 10;
+static const double MAX_SIM_ITERS = 1000;
 
 
 // A 2D Point In Space (measured in meters)
@@ -60,10 +62,17 @@ struct MovementMsg {
     double throttle;
 };
 
-// Test Macro
-#define TEST(COND) \
-    if (!( COND )) { \
-        std::cout << "WARNING: " << #COND << " is FALSE" << std::endl; \
+/** Test Macros **/
+// Test that two values are exactly equal
+#define TEST_EQ(EXPECTED, ACTUAL) \
+    if (EXPECTED != ACTUAL) { \
+        std::cout << "FAILURE: " << #ACTUAL << " gave " << ACTUAL << ", but expected " << EXPECTED << std::endl; \
+    }
+
+// Test that two values are equal to within some tolerance
+#define TEST_EQ_WITHIN_TOLERANCE(EXPECTED, ACTUAL, TOLERANCE) \
+    if (std::abs(EXPECTED - ACTUAL) > TOLERANCE) { \
+        std::cout << "FAILURE: " << #ACTUAL << " gave " << ACTUAL << ", but expected " << EXPECTED << " (with tolerance of " << TOLERANCE << ")" << std::endl; \
     }
 
 // Pre-declarations for functions
@@ -76,9 +85,6 @@ void runTests();
 std::stack<Point> waypoints;
 
 int main(int argc, char** argv) {
-    /** RUN TESTS **/
-    runTests();
-
     /** SETUP THE WAYPOINTS **/
 
     // Read the waypoints in from a file
@@ -113,33 +119,48 @@ int main(int argc, char** argv) {
             << curr_robot_status.position.y << ", " 
             << curr_robot_status.heading << std::endl;
 
-        // Update Robot State
         MovementMsg mv_msg = computeNewMovement(curr_robot_status);
+        // Constrain turn angle to physical limitations
+        mv_msg.steering_angle = std::min(std::max(-MAX_TURN_ANGLE, mv_msg.steering_angle), MAX_TURN_ANGLE);
 
+        // Update Robot State
         // You don't need to understand this, but we're using a simple
         // "tricycle" ackermann model here to update the robot state
         double d_theta = (mv_msg.throttle / ROBOT_LENGTH) * 
             std::tan(mv_msg.steering_angle);
-        double d_x = mv_msg.throttle * 
-            std::cos(curr_robot_status.heading + (d_theta * SIM_TIME_STEP)/2);
+        double d_x = mv_msg.throttle *
+            std::sin(curr_robot_status.heading + (d_theta * SIM_TIME_STEP)/2.0);
         double d_y = mv_msg.throttle * 
-            std::sin(curr_robot_status.heading + (d_theta * SIM_TIME_STEP)/2);
+            std::cos(curr_robot_status.heading + (d_theta * SIM_TIME_STEP)/2.0);
         
         curr_robot_status.position.x += d_x * SIM_TIME_STEP;
         curr_robot_status.position.y += d_y * SIM_TIME_STEP;
         curr_robot_status.heading += d_theta * SIM_TIME_STEP;
     }
+
+    if (waypoints.empty()) {
+        std::cout << "All waypoints reached!!" << std::endl;
+    }
+
+    /** RUN TESTS **/
+    runTests();
+
 }
 
 /* ------- YOUR CODE GOES BELOW HERE ------- */
 
 void runTests() {
     // HINT: Add tests for your functions here!!
-    
-    TEST(distanceBetweenPoints({0,0}, {10, 0}) == 10);
+    std::cout << "-------------" << std::endl;
+    std::cout << "Failed Tests:" << std::endl;
+    std::cout << "-------------" << std::endl;
 
-    TEST(angleBetweenPoints({0,0}, {10, 10}) > M_PI/4-0.0001);
-    TEST(angleBetweenPoints({0,0}, {10, 10}) < M_PI/4+0.0001);
+    TEST_EQ(10, distanceBetweenPoints({0,0}, {10, 0}));
+    TEST_EQ(5, distanceBetweenPoints({0,0}, {3, 4}));
+
+    // We don't test for exact equality here because of floating point error
+    TEST_EQ_WITHIN_TOLERANCE(0, angleBetweenPoints({0,0}, {0, 10}), 0.0000001);
+    TEST_EQ_WITHIN_TOLERANCE(M_PI/2, angleBetweenPoints({0,0}, {10, 0}), 0.0000001);
 
     std::cout << "-------------" << std::endl;
 }
@@ -157,9 +178,10 @@ double distanceBetweenPoints(Point p1, Point p2) {
 }
 
 /**
- * Calculates the angle between the two given points
+ * Calculates the angle from the first point to the second point
  * 
- * The angle is measured assuming +X is 0 degrees, +Y is +90 degrees
+ * The angle is measured assuming +Y is 0 degrees, +X is +90 degrees,
+ * -X is -90 degrees, -Y is -180 or 180
  *
  * @param p1 the first point
  * @param p2 the second point
