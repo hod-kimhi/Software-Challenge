@@ -120,6 +120,7 @@ int main(int argc, char** argv) {
             << curr_robot_status.heading << std::endl;
 
         MovementMsg mv_msg = computeNewMovement(curr_robot_status);
+
         // Constrain turn angle to physical limitations
         mv_msg.steering_angle = std::min(std::max(-MAX_TURN_ANGLE, mv_msg.steering_angle), MAX_TURN_ANGLE);
 
@@ -180,19 +181,19 @@ double distanceBetweenPoints(Point p1, Point p2) {
 /**
  * Calculates the angle from the first point to the second point
  * 
- * The angle is measured assuming +Y is 0 degrees, +X is +90 degrees,
- * -X is -90 degrees, -Y is -180 or 180
+ * The angle is measured assuming +Y is 0 radians, +X is +PI/2 radians,
+ * -X is -PI/2 radians, -Y is -PI or +PI
  *
  * @param p1 the first point
  * @param p2 the second point
  *
- * @return the angle between between p1 and p2
+ * @return the angle between between p1 and p2 in *radians*
  */
 double angleBetweenPoints(Point p1, Point p2) {
     // TODO #2
 }
 
-/** 
+/**
  * Calculate a new MovementMsg based on the given StatusMsg
  *
  * This MovementMsg should move the Robot towards the next waypoint.
