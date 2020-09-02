@@ -13,9 +13,11 @@
 #include <iostream>
 #include <stack>
 #include <vector>
+#define _USE_MATH_DEFINES
 #include <cmath>
 #include <math.h>
 #include <fstream>
+#include <algorithm>
 
 /** Constants **/
 /** (you probably don't need to care about these, and should *NOT* change them) **/
@@ -107,7 +109,7 @@ int main(int argc, char** argv) {
 
     // This is our crude "simulator". You don't need to touch this, though
     // it might help to at least somewhat understand what we're doing.
-    StatusMsg curr_robot_status{ (Point){0,0}, 0 };
+    StatusMsg curr_robot_status{ Point {0,0}, 0 };
     int curr_sim_iter = 0;
 
     std::cout << "x, y, heading" << std::endl << "-------------" << std::endl;
