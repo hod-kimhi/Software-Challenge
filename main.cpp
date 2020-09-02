@@ -177,7 +177,9 @@ void runTests() {
  * @return the absolute distance between p1 and p2
  */
 double distanceBetweenPoints(Point p1, Point p2) {
-    // TODO #1
+    double d_x = abs(p2.x - p1.x);
+    double d_y = abs(p2.y - p1.y);
+    return sqrt(pow(d_x, 2) + pow(d_y, 2));
 }
 
 /**
