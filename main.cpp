@@ -164,6 +164,7 @@ void runTests() {
     // We don't test for exact equality here because of floating point error
     TEST_EQ_WITHIN_TOLERANCE(0, angleBetweenPoints({0,0}, {0, 10}), 0.0000001);
     TEST_EQ_WITHIN_TOLERANCE(M_PI/2, angleBetweenPoints({0,0}, {10, 0}), 0.0000001);
+    TEST_EQ_WITHIN_TOLERANCE(1.0121970, angleBetweenPoints({0,0}, {8,5}), 0.0000001);
 
     std::cout << "-------------" << std::endl;
 }
@@ -194,7 +195,9 @@ double distanceBetweenPoints(Point p1, Point p2) {
  * @return the angle between between p1 and p2 in *radians*
  */
 double angleBetweenPoints(Point p1, Point p2) {
-    // TODO #2
+    double d_x = p2.x - p1.x;
+    double d_y = p2.y - p1.y;
+    return std::atan2(d_x, d_y);
 }
 
 /**
