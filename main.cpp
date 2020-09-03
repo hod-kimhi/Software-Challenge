@@ -212,7 +212,6 @@ double angleBetweenPoints(Point p1, Point p2) {
  * @return A MovementMsg moving the robot towards the next waypoint
  */
 MovementMsg computeNewMovement(StatusMsg status) {
-    // TODO #3
     // NOTE: The "simulator" will stop once "waypoints" is empty
     // HINT: You are allowed to change the waypoints file for testing (by
     //       modifying "WAYPOINTS_FILE_NAME" at the top of this file) (but we
@@ -223,5 +222,17 @@ MovementMsg computeNewMovement(StatusMsg status) {
     //       into a scatter plot in excel (or equivalent). You may also want
     //       to change "MAX_SIM_ITERS" at the top of this file to limit the 
     //       number of simulator iterations at first
-    return MovementMsg({3.14159/4,1});
+
+    Point curr_waypoint = waypoints.top();
+    if(distanceBetweenPoints(curr_waypoint, status.position) <= WAYPOINT_TOLERANCE) {
+        waypoints.pop();
+        if(waypoints.empty()) return MovementMsg({0, 0}); //if all waypoints have been reached (waypoints stack is empty), don't move since we're done
+        curr_waypoint = waypoints.top();
+    }
+
+    double angle = angleBetweenPoints(status.position, curr_waypoint);
+    double steeringAngle = angle - status.heading;
+    return MovementMsg({steeringAngle, 1});
+
 }
+
