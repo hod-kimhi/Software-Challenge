@@ -162,9 +162,17 @@ void runTests() {
     TEST_EQ(5, distanceBetweenPoints({0,0}, {3, 4}));
 
     // We don't test for exact equality here because of floating point error
-    TEST_EQ_WITHIN_TOLERANCE(0, angleBetweenPoints({0,0}, {0, 10}), 0.0000001);
-    TEST_EQ_WITHIN_TOLERANCE(M_PI/2, angleBetweenPoints({0,0}, {10, 0}), 0.0000001);
     TEST_EQ_WITHIN_TOLERANCE(1.0121970, angleBetweenPoints({0,0}, {8,5}), 0.0000001);
+    TEST_EQ_WITHIN_TOLERANCE((M_PI), angleBetweenPoints({10,7}, {10,5}), 0.0000001);
+    TEST_EQ_WITHIN_TOLERANCE((M_PI_4), angleBetweenPoints({0,0}, {1,1}), 0.0000001);
+    TEST_EQ_WITHIN_TOLERANCE(3*M_PI_4, angleBetweenPoints({0,0}, {1,-1}), 0.0000001);
+    TEST_EQ_WITHIN_TOLERANCE((-3*M_PI_4 + 2*M_PI), angleBetweenPoints({0,0}, {-1,-1}), 0.0000001);
+    TEST_EQ_WITHIN_TOLERANCE((-M_PI_4 + 2*M_PI), angleBetweenPoints({0,0}, {-1,1}), 0.0000001);
+    TEST_EQ_WITHIN_TOLERANCE((M_PI_2), angleBetweenPoints({0,0}, {10,0}), 0.0000001);
+    TEST_EQ_WITHIN_TOLERANCE((-M_PI_2 + 2*M_PI), angleBetweenPoints({0,0}, {-10,0}), 0.0000001);
+    TEST_EQ_WITHIN_TOLERANCE(0, angleBetweenPoints({0,0}, {0, 10}), 0.0000001);
+    TEST_EQ_WITHIN_TOLERANCE((M_PI_2), angleBetweenPoints({0,0}, {10, 0}), 0.0000001);
+
 
     std::cout << "-------------" << std::endl;
 }
@@ -197,7 +205,19 @@ double distanceBetweenPoints(Point p1, Point p2) {
 double angleBetweenPoints(Point p1, Point p2) {
     double d_x = p2.x - p1.x;
     double d_y = p2.y - p1.y;
-    return std::atan2(d_x, d_y);
+    if(d_x == 0) {
+        if(d_y >= 0) {
+            return 0;
+        } else {
+            return M_PI;
+        }
+    }
+
+    double angle = std::atan2(d_x, d_y);
+    if(angle < 0) {
+        angle += 2*M_PI;
+    }
+    return angle;
 }
 
 /**
@@ -230,9 +250,16 @@ MovementMsg computeNewMovement(StatusMsg status) {
         curr_waypoint = waypoints.top();
     }
 
-    double angle = angleBetweenPoints(status.position, curr_waypoint);
-    double steeringAngle = angle - status.heading;
-    return MovementMsg({steeringAngle, 1});
+    double targetHeading = angleBetweenPoints(status.position, curr_waypoint);
+    double currentHeading = status.heading;
+    double steeringAngle = targetHeading - status.heading;
 
+    if(currentHeading > (targetHeading + M_PI)) {
+        steeringAngle = 2*M_PI - (currentHeading - targetHeading);
+    } else if (currentHeading < (targetHeading - M_PI)) {
+        steeringAngle = -2*M_PI + (targetHeading - currentHeading);
+    }
+
+    return MovementMsg({steeringAngle, 1});
 }
 
