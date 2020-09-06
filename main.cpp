@@ -35,7 +35,7 @@ static const double MAX_TURN_ANGLE = M_PI/3;
 static const char* WAYPOINTS_FILE_NAME = "waypoints.txt";
 // The maximum number of iterations the simulator will run (presuming 
 // "waypoints" is never empty)
-static const double MAX_SIM_ITERS = 1000;
+static const double MAX_SIM_ITERS = 500000;
 
 
 // A 2D Point In Space (measured in meters)
@@ -244,7 +244,8 @@ MovementMsg computeNewMovement(StatusMsg status) {
     //       number of simulator iterations at first
 
     Point curr_waypoint = waypoints.top();
-    if(distanceBetweenPoints(curr_waypoint, status.position) <= WAYPOINT_TOLERANCE) {
+    double distance = distanceBetweenPoints(curr_waypoint, status.position);
+    if(distance <= WAYPOINT_TOLERANCE) {
         waypoints.pop();
         if(waypoints.empty()) return MovementMsg({0, 0}); //if all waypoints have been reached (waypoints stack is empty), don't move since we're done
         curr_waypoint = waypoints.top();
@@ -252,8 +253,15 @@ MovementMsg computeNewMovement(StatusMsg status) {
 
     double targetHeading = angleBetweenPoints(status.position, curr_waypoint);
     double currentHeading = status.heading;
-    double steeringAngle = targetHeading - status.heading;
 
+    while(currentHeading > 2*M_PI) {
+        currentHeading -= 2*M_PI;
+    }
+    while(currentHeading < -2*M_PI) {
+        currentHeading += 2*M_PI;
+    }
+
+    double steeringAngle = targetHeading - currentHeading;
     if(currentHeading > (targetHeading + M_PI)) {
         steeringAngle = 2*M_PI - (currentHeading - targetHeading);
     } else if (currentHeading < (targetHeading - M_PI)) {
