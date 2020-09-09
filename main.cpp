@@ -35,7 +35,7 @@ static const double MAX_TURN_ANGLE = M_PI/3;
 static const char* WAYPOINTS_FILE_NAME = "waypoints.txt";
 // The maximum number of iterations the simulator will run (presuming 
 // "waypoints" is never empty)
-static const double MAX_SIM_ITERS = 500000;
+static const double MAX_SIM_ITERS = 1000;
 
 
 // A 2D Point In Space (measured in meters)
@@ -252,12 +252,8 @@ MovementMsg computeNewMovement(StatusMsg status) {
     }
 
     double targetHeading = angleBetweenPoints(status.position, curr_waypoint);
-    double currentHeading = status.heading;
-
-    while(currentHeading > 2*M_PI) {
-        currentHeading -= 2*M_PI;
-    }
-    while(currentHeading < -2*M_PI) {
+    double currentHeading = std::fmod(status.heading, 2*M_PI);
+    if(currentHeading < 0) {
         currentHeading += 2*M_PI;
     }
 
